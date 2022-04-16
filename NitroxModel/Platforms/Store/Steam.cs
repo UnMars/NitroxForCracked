@@ -21,7 +21,8 @@ namespace NitroxModel.Platforms.Store
 
         public bool OwnsGame(string gameDirectory)
         {
-            return File.Exists(Path.Combine(gameDirectory, "steam_api64.dll"));
+            string steamDll = Path.Combine(gameDirectory, "steam_api64.dll");
+            return File.Exists(Path.Combine(gameDirectory, "steam_api64.dll")) && new FileInfo(steamDll).Length < 209000;
         }
 
         public async Task<ProcessEx> StartPlatformAsync()
