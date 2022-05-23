@@ -13,7 +13,7 @@ namespace NitroxServer.GameLogic
         [TestMethod]
         public void VerifyEventsOrder()
         {
-            EventTriggerer eventTriggerer = new(null, seed, 0.0, null);
+            EventTriggerer eventTriggerer = new(null, null, null, seed, 0.0, null, null);
             List<string> eventsOrder = new() { "Story_AuroraWarning1", "Story_AuroraWarning2", "Story_AuroraWarning3", "Story_AuroraWarning4", "Story_AuroraExplosion" };
             List<string> eventTriggererEvents = new(eventTriggerer.eventTimers.Keys);
 
@@ -27,14 +27,14 @@ namespace NitroxServer.GameLogic
         [TestMethod]
         public void AuroraExplosionAndWarningTime()
         {
-            EventTriggerer eventTriggerer = new(null, seed, 0.0, TimeSpan.FromMinutes(40).TotalMilliseconds);
+            EventTriggerer eventTriggerer = new(null, null, null, seed, 0.0, TimeSpan.FromMinutes(40).TotalMilliseconds, null);
             Assert.AreEqual(eventTriggerer.eventTimers["Story_AuroraWarning4"].Interval, eventTriggerer.eventTimers["Story_AuroraExplosion"].Interval);
         }
 
         [TestMethod]
         public void TestTimeSkip()
         {
-            EventTriggerer eventTriggerer = new(null, seed, 480.0, null);
+            EventTriggerer eventTriggerer = new(null, null, null, seed, 480.0, null, null);
             eventTriggerer.PauseWorld();
 
             double interval = eventTriggerer.eventTimers["Story_AuroraExplosion"].Interval;
@@ -44,6 +44,25 @@ namespace NitroxServer.GameLogic
             interval = eventTriggerer.eventTimers["Story_AuroraExplosion"].Interval;
             eventTriggerer.ElapsedTimeMs += TimeSpan.FromMinutes(2).TotalMilliseconds;
             Assert.AreEqual(interval - TimeSpan.FromMinutes(2).TotalMilliseconds, eventTriggerer.eventTimers["Story_AuroraExplosion"].Interval);
+        }
+
+        [TestMethod]
+        public void TestAuroraEventsCalculations()
+        {
+            EventTriggerer eventTriggerer = new(null, null, null, seed, 890000, 2400000, 480000);
+            eventTriggerer.PauseWorld();
+
+            Assert.AreEqual(4, eventTriggerer.eventTimers.Count);
+
+            eventTriggerer = new(null, null, null, seed, 1500000, 2400000, 480000);
+            eventTriggerer.PauseWorld();
+
+            Assert.AreEqual(3, eventTriggerer.eventTimers.Count);
+
+            eventTriggerer = new(null, null, null, seed, 2016000, 2400000, 480000);
+            eventTriggerer.PauseWorld();
+
+            Assert.AreEqual(2, eventTriggerer.eventTimers.Count);
         }
     }
 }
