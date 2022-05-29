@@ -257,6 +257,7 @@ namespace NitroxLauncher
                 EpicGames e => await e.StartGameAsync(subnauticaExe, subnauticaLaunchArguments),
                 MSStore m => await m.StartGameAsync(subnauticaExe),
                 DiscordStore d => await d.StartGameAsync(subnauticaExe, subnauticaLaunchArguments),
+                Cracked c => await c.StartGameAsync(subnauticaExe, subnauticaLaunchArguments),
                 _ => throw new Exception($"Directory '{subnauticaPath}' is not a valid {GameInfo.Subnautica.Name} game installation or the game's platform is unsupported by Nitrox.")
             };
 
