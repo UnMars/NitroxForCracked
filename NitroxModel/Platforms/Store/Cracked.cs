@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using NitroxModel.Discovery;
@@ -15,7 +15,7 @@ namespace NitroxModel.Platforms.Store {
         public static Cracked Instance => instance ??= new Cracked();
 
         public string Name => "Cracked";
-        public Platform platform => Platform.STEAM;
+        public Platform Platform => Platform.STEAM;
 
         public bool OwnsGame(string gameDirectory)
         {
