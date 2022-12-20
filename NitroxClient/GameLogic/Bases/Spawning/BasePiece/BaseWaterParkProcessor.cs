@@ -18,18 +18,26 @@ namespace NitroxClient.GameLogic.Bases.Spawning.BasePiece
             TechType.BaseWaterPark
         };
 
+        protected override bool ShouldRerunSpawnProcessor => true;
+
         protected override void SpawnPostProcess(Base latestBase, Int3 latestCell, GameObject finishedPiece)
         {
             NitroxId pieceId = NitroxEntity.GetId(finishedPiece);
 
-            WaterParkPiece waterParkPiece = finishedPiece.GetComponent<WaterParkPiece>();
+            WaterParkGeometry waterParkPiece = finishedPiece.GetComponent<WaterParkGeometry>();
             if (!waterParkPiece)
             {
                 // The BaseWater has multiple base pieces, but only one of them (the bottom) contains the WaterParkPiece component...
                 return;
             }
 
-            WaterPark waterPark = waterParkPiece.GetWaterParkModule();
+            WaterPark waterPark = waterParkPiece.GetModule();
+            // When reruning the spawn processor, the module will not be found at first so we need to delay its detection
+            if (!waterPark)
+            {
+                DelayModuleDetection(latestBase, latestCell, finishedPiece);
+                return;
+            }
             Validate.NotNull(waterPark, "WaterParkPiece without WaterParkModule?!?");
 
             // assuming there could be multiple pieces sharing the same waterpark we only create an ID if there is none.

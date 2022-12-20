@@ -116,8 +116,9 @@ namespace NitroxServer.GameLogic
             bool hasSeenPlayerBefore = player != null;
             ushort playerId = hasSeenPlayerBefore ? player.Id : ++currentPlayerId;
             NitroxId playerNitroxId = hasSeenPlayerBefore ? player.GameObjectId : new NitroxId();
-
-            PlayerContext playerContext = new(playerName, playerId, playerNitroxId, !hasSeenPlayerBefore, playerSettings);
+            
+            // TODO: At some point, store the muted state of a player
+            PlayerContext playerContext = new(playerName, playerId, playerNitroxId, !hasSeenPlayerBefore, playerSettings, false);
             string reservationKey = Guid.NewGuid().ToString();
 
             reservations.Add(reservationKey, playerContext);
@@ -191,6 +192,7 @@ namespace NitroxServer.GameLogic
                     playerContext,
                     connection,
                     NitroxVector3.Zero,
+                    NitroxQuaternion.Identity,
                     playerContext.PlayerNitroxId,
                     Optional.Empty,
                     serverConfig.DefaultPlayerPerm,
@@ -199,7 +201,8 @@ namespace NitroxServer.GameLogic
                     Array.Empty<string>(),
                     new List<EquippedItemData>(),
                     new List<EquippedItemData>(),
-                    new HashSet<string>()
+                    new HashSet<string>(),
+                    new Dictionary<string, PingInstancePreference>()
                 );
                 allPlayersByName[playerContext.PlayerName] = player;
             }

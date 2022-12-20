@@ -1,4 +1,5 @@
 ﻿using System;
+using BinaryPack.Attributes;
 using ProtoBufNet;
 
 namespace NitroxModel.DataStructures.GameLogic
@@ -13,6 +14,7 @@ namespace NitroxModel.DataStructures.GameLogic
         [ProtoMember(2)]
         public NitroxTechType TechType { get; }
 
+        [IgnoreConstructor]
         protected EquippedItemData()
         {
             // Constructor for serialization. Has to be "protected" for json serialization.
@@ -26,7 +28,7 @@ namespace NitroxModel.DataStructures.GameLogic
 
         public override string ToString()
         {
-            return "[EquippedItemData ContainerGuid: " + ContainerId + "Id: " + ItemId + " Slot: " + Slot + " TechType: " + TechType + "]";
+            return $"[EquippedItemData ContainerGuid: {ContainerId}Id: {ItemId} Slot: {Slot} TechType: {TechType}]";
         }
     }
 }

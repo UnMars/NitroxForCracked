@@ -39,7 +39,7 @@ namespace NitroxClient.GameLogic.InitialSync
 
                 if (!IsSwimming(playerData.Position.ToUnity(), playerData.SubRootId))
                 {
-                    player.UpdateAnimation(AnimChangeType.UNDERWATER, AnimChangeState.OFF);
+                    player.UpdateAnimationAndCollider(AnimChangeType.UNDERWATER, AnimChangeState.OFF);
                 }
                 remotePlayersSynced++;
                 yield return null;
@@ -89,7 +89,7 @@ namespace NitroxClient.GameLogic.InitialSync
                 }
             }
             // Player can be above ocean level.
-            float oceanLevel = Ocean.main.GetOceanLevel();
+            float oceanLevel = Ocean.GetOceanLevel();
             return playerPosition.y < oceanLevel;
         }
     }

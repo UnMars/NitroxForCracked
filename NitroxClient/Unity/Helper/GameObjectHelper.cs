@@ -58,7 +58,7 @@ namespace NitroxClient.Unity.Helper
 
             if (!child)
             {
-                throw new ArgumentNullException(tf + " does not contain \"" + name + "\"");
+                throw new ArgumentNullException($@"{tf} does not contain ""{name}""");
             }
 
             return child;
@@ -74,7 +74,7 @@ namespace NitroxClient.Unity.Helper
         public static GameObject RequireGameObject(string name)
         {
             GameObject go = GameObject.Find(name);
-            Validate.IsTrue(go, "No global GameObject found with " + name + "!");
+            Validate.IsTrue(go, $"No global GameObject found with {name}!");
 
             return go;
         }
@@ -122,6 +122,21 @@ namespace NitroxClient.Unity.Helper
             }
 
             return sb.ToString();
+        }
+
+        public static bool TryGetComponentInAscendance<T>(this Transform transform, int degree, out T component)
+        {
+            while (degree > 0)
+            {
+                if (!transform.parent)
+                {
+                    component = default;
+                    return false;
+                }
+                transform = transform.parent;
+                degree--;
+            }
+            return transform.TryGetComponent(out component);
         }
     }
 }

@@ -17,7 +17,7 @@ using NitroxServer.GameLogic.Items;
 using NitroxServer.GameLogic.Players;
 using NitroxServer.GameLogic.Unlockables;
 using NitroxServer.GameLogic.Vehicles;
-using NitroxServer.Serialization.Resources.Datastructures;
+using NitroxServer.Resources;
 using NitroxServer.Serialization.Upgrade;
 
 namespace NitroxServer.Serialization.World
@@ -72,6 +72,11 @@ namespace NitroxServer.Serialization.World
                 Serializer.Serialize(Path.Combine(saveDir, $"WorldData{FileEnding}"), persistedData.WorldData);
                 Serializer.Serialize(Path.Combine(saveDir, $"EntityData{FileEnding}"), persistedData.EntityData);
 
+                using (config.Update(saveDir))
+                {
+                    config.Seed = persistedData.WorldData.Seed;
+                }
+
                 Log.Info("World state saved");
                 return true;
             }
@@ -113,20 +118,24 @@ namespace NitroxServer.Serialization.World
             }
             catch (Exception ex)
             {
-                Log.Error($"Could not load world, creating a new one : {ex.GetType()} {ex.Message}");
+                // Check if the world was newly created using the world manager
+                if (new FileInfo(Path.Combine(saveDir, $"Version{FileEnding}")).Length > 0)
+                {
+                    Log.Error($"Could not load world, creating a new one : {ex.GetType()} {ex.Message}");
 
-                //Backup world if loading fails
-                string outZip = Path.Combine(saveDir, "worldBackup.zip");
-                Log.WarnSensitive("Creating a backup at {path}", Path.GetFullPath(outZip));
-                FileSystem.Instance.ZipFilesInDirectory(saveDir, outZip, $"*{FileEnding}", true);
+                    // Backup world if loading fails
+                    string outZip = Path.Combine(saveDir, "worldBackup.zip");
+                    Log.WarnSensitive("Creating a backup at {path}", Path.GetFullPath(outZip));
+                    FileSystem.Instance.ZipFilesInDirectory(saveDir, outZip, $"*{FileEnding}", true);
+                }
             }
 
             return Optional.Empty;
         }
-
+        
         public World Load()
         {
-            Optional<World> fileLoadedWorld = LoadFromFile(config.SaveName);
+            Optional<World> fileLoadedWorld = LoadFromFile(Path.Combine(WorldManager.SavesFolderDir, config.SaveName));
             if (fileLoadedWorld.HasValue)
             {
                 return fileLoadedWorld.Value;
@@ -154,11 +163,7 @@ namespace NitroxServer.Serialization.World
                     InventoryData = InventoryData.From(new List<ItemData>(), new List<ItemData>(), new List<EquippedItemData>()),
                     VehicleData = VehicleData.From(new List<VehicleModel>()),
                     ParsedBatchCells = new List<NitroxInt3>(),
-#if DEBUG
-                    Seed = "TCCBIBZXAB"
-#else
                     Seed = config.Seed
-#endif
                 }
             };
 
@@ -170,7 +175,11 @@ namespace NitroxServer.Serialization.World
             string seed = pWorldData.WorldData.Seed;
             if (string.IsNullOrWhiteSpace(seed))
             {
+#if DEBUG
+                seed = "TCCBIBZXAB";
+#else
                 seed = StringHelper.GenerateRandomString(10);
+#endif
             }
 
             Log.Info($"Loading world with seed {seed}");
@@ -192,7 +201,7 @@ namespace NitroxServer.Serialization.World
             };
 
             world.EventTriggerer = new EventTriggerer(world.PlayerManager, pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, seed, pWorldData.WorldData.GameData.StoryTiming.ElapsedTime, pWorldData.WorldData.GameData.StoryTiming.AuroraExplosionTime, pWorldData.WorldData.GameData.StoryTiming.AuroraWarningTime);
-            world.VehicleManager = new VehicleManager(pWorldData.WorldData.VehicleData.Vehicles, world.InventoryManager);
+            world.VehicleManager = new VehicleManager(pWorldData.WorldData.VehicleData.Vehicles, world.InventoryManager, world.SimulationOwnershipData);
             world.ScheduleKeeper = new ScheduleKeeper(pWorldData.WorldData.GameData.PDAState, pWorldData.WorldData.GameData.StoryGoals, world.EventTriggerer, world.PlayerManager);
 
             world.BatchEntitySpawner = new BatchEntitySpawner(

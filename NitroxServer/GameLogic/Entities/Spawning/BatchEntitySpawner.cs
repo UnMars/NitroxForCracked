@@ -7,8 +7,8 @@ using NitroxModel.DataStructures.GameLogic.Entities;
 using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
 using NitroxServer.Helper;
+using NitroxServer.Resources;
 using NitroxServer.Serialization;
-using NitroxServer.Serialization.Resources.Datastructures;
 
 namespace NitroxServer.GameLogic.Entities.Spawning
 {
@@ -94,7 +94,7 @@ namespace NitroxServer.GameLogic.Entities.Spawning
             }
             else if(!fullCacheCreation)
             {
-                Log.Info("Spawning " + entities.Count + " entities from " + spawnPoints.Count + " spawn points in batch " + batchId);
+                Log.Info($"Spawning {entities.Count} entities from {spawnPoints.Count} spawn points in batch {batchId}");
             }
 
             for (int x = 0; x < entities.Count; x++) // Throws on duplicate Entities already but nice to know which ones
@@ -103,7 +103,7 @@ namespace NitroxServer.GameLogic.Entities.Spawning
                 {
                     if (entities[x] == entities[y] && x != y)
                     {
-                        Log.Error("Duplicate Entity detected! " + entities[x]);
+                        Log.Error($"Duplicate Entity detected! {entities[x]}");
                     }
                 }
             }
@@ -122,13 +122,13 @@ namespace NitroxServer.GameLogic.Entities.Spawning
                 yield break;
             }
 
-            double randomNumber = deterministicBatchGenerator.NextDouble();
+            float randomNumber = (float)deterministicBatchGenerator.NextDouble();
             if (rollingProbabilityDensity > 1f)
             {
                 randomNumber *= rollingProbabilityDensity;
             }
 
-            double rollingProbability = 0;
+            float rollingProbability = 0;
 
             UwePrefab selectedPrefab = allowedPrefabs.FirstOrDefault(prefab =>
             {
@@ -360,12 +360,12 @@ namespace NitroxServer.GameLogic.Entities.Spawning
                              counter++,
                              parent);
 
-                // Checkes if the current object being setup is a Placeholder object.
+                // Checks if the current object being setup is a Placeholder object.
                 // MrPurple6411 Verified All Placeholders use this in the name.  (verified in SN1 did not check BZ yet)
                 if (prefab.Name.Contains("(Placeholder)"))
                 {
                     // Finds the matching prefab that the placeholder is supposed to spawn.
-                    PrefabAsset spawnablePrefab = spawnablePrefabs.Find((x) => x.TransformAsset == transform);
+                    PrefabAsset spawnablePrefab = spawnablePrefabs.Find((x) => x.ClassId == prefab.PlaceholderIdentifier.Value);
                     if (spawnablePrefab != null)
                     {
                         Optional<UweWorldEntity> opWorldEntity = worldEntityFactory.From(spawnablePrefab.ClassId);
@@ -394,6 +394,11 @@ namespace NitroxServer.GameLogic.Entities.Spawning
                             if (possibleEntity != null)
                             {
                                 parent.ChildEntities.Add(possibleEntity);
+                            }
+                            else
+                            {
+                                // Without the "continue;" lots of entities as fragments will stop spawning (#1779)
+                                continue;
                             }
                         }
 

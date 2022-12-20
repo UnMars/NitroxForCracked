@@ -8,7 +8,7 @@ using System.Text;
 
 namespace NitroxModel.Serialization
 {
-    public abstract class NitroxConfig<T> where T : NitroxConfig<T>
+    public abstract class NitroxConfig<T> where T : NitroxConfig<T>, new()
     {
         // ReSharper disable once StaticMemberInGenericType
         private static readonly Dictionary<string, MemberInfo> typeCache = new();
@@ -17,11 +17,16 @@ namespace NitroxModel.Serialization
 
         public abstract string FileName { get; }
 
-        public bool ConfigFileExists => File.Exists(FileName);
-
-        public void Deserialize()
+        public static T Load(string saveDir)
         {
-            if (!ConfigFileExists)
+            T config = new();
+            config.Update(saveDir);
+            return config;
+        }
+
+        public void Deserialize(string saveDir)
+        {
+            if (!File.Exists(Path.Combine(saveDir, FileName)))
             {
                 return;
             }
@@ -30,7 +35,7 @@ namespace NitroxModel.Serialization
             {
                 Type type = GetType();
                 Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
-                using StreamReader reader = new(new FileStream(FileName, FileMode.Open), Encoding.UTF8);
+                using StreamReader reader = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.UTF8);
 
                 HashSet<MemberInfo> unserializedMembers = new(typeCachedDict.Values);
                 char[] lineSeparator = { '=' };
@@ -70,7 +75,7 @@ namespace NitroxModel.Serialization
                     }
                     else
                     {
-                        Log.Error($"Incorrect format detected on line {lineNum} in {Path.GetFullPath(FileName)}:{Environment.NewLine}{readLine}");
+                        Log.Error($"Incorrect format detected on line {lineNum} in {Path.GetFullPath(Path.Combine(saveDir, FileName))}:{Environment.NewLine}{readLine}");
                     }
                 }
 
@@ -96,7 +101,7 @@ namespace NitroxModel.Serialization
             }
         }
 
-        public void Serialize()
+        public void Serialize(string saveDir)
         {
             lock (locker)
             {
@@ -104,7 +109,7 @@ namespace NitroxModel.Serialization
                 Dictionary<string, MemberInfo> typeCachedDict = GetTypeCacheDictionary();
                 try
                 {
-                    using StreamWriter stream = new(new FileStream(FileName, FileMode.Create), Encoding.UTF8);
+                    using StreamWriter stream = new(new FileStream(Path.Combine(saveDir, FileName), FileMode.Create, FileAccess.Write), Encoding.UTF8);
                     WritePropertyDescription(type, stream);
 
                     foreach (string name in typeCachedDict.Keys)
@@ -136,18 +141,9 @@ namespace NitroxModel.Serialization
         /// <summary>
         ///     Ensures updates are properly persisted to the backing config file without overwriting user edits.
         /// </summary>
-        /// <param name="config"></param>
-        public void Update(Action<T> config = null)
+        public UpdateDiposable Update(string saveDir)
         {
-            try
-            {
-                Deserialize();
-                config?.Invoke(this as T);
-            }
-            finally
-            {
-                Serialize();
-            }
+            return new UpdateDiposable(this, saveDir);
         }
 
         private static Dictionary<string, MemberInfo> GetTypeCacheDictionary()
@@ -237,6 +233,21 @@ namespace NitroxModel.Serialization
                     stream.WriteLine(line);
                 }
             }
+        }
+
+        public struct UpdateDiposable : IDisposable
+        {
+            private string SaveDir { get; }
+            private NitroxConfig<T> Config { get; }
+
+            public UpdateDiposable(NitroxConfig<T> config, string saveDir)
+            {
+                config.Deserialize(saveDir);
+                SaveDir = saveDir;
+                Config = config;
+            }
+
+            public void Dispose() => Config.Serialize(SaveDir);
         }
     }
 }

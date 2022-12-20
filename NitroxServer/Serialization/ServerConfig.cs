@@ -15,23 +15,17 @@ namespace NitroxServer.Serialization
         [PropertyDescription("Set to true to Cache entities for the whole map on next run. \nWARNING! Will make server load take longer on the cache run but players will gain a performance boost when entering new areas.")]
         public bool CreateFullEntityCache = false;
 
-        private int portSetting = ServerList.DEFAULT_PORT;
-
         private int saveIntervalSetting = 120000;
 
         private string postSaveCommandPath = string.Empty;
 
-        private string saveNameSetting = "world";
+        private string saveNameSetting = "My World";
         public override string FileName => "server.cfg";
 
         [PropertyDescription("Leave blank for a random spawn position")]
         public string Seed { get; set; }
 
-        public int ServerPort
-        {
-            get => portSetting;
-            set => portSetting = value;
-        }
+        public int ServerPort { get; set; } = ServerList.DEFAULT_PORT;
 
         [PropertyDescription("Measured in milliseconds")]
         public int SaveInterval
@@ -40,7 +34,7 @@ namespace NitroxServer.Serialization
 
             set
             {
-                Validate.IsTrue(value > 1000, "SaveInterval must be greater than 1000");
+                Validate.IsTrue(value >= 1000, "SaveInterval must be greater than 1000");
                 saveIntervalSetting = value;
             }
         }
@@ -120,12 +114,5 @@ namespace NitroxServer.Serialization
         public bool AutoPortForward { get; set; } = true;
         [PropertyDescription("Determines whether the server will listen for and reply to LAN discovery requests.")]
         public bool LANDiscoveryEnabled { get; set; } = true;
-
-        public static ServerConfig Load()
-        {
-            ServerConfig config = new();
-            config.Update();
-            return config;
-        }
     }
 }

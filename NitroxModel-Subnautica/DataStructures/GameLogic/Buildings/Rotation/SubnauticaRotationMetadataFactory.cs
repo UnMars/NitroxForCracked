@@ -1,7 +1,5 @@
 ﻿using NitroxModel.DataStructures.GameLogic.Buildings.Rotation;
-using NitroxModel.DataStructures.Unity;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Helper;
 using NitroxModel_Subnautica.DataStructures.GameLogic.Buildings.Rotation.Metadata;
 using UnityEngine;
 
@@ -17,18 +15,16 @@ namespace NitroxModel_Subnautica.DataStructures.GameLogic.Buildings.Rotation
             {
                 case BaseAddCorridorGhost corridorGhost:
                 {
-                    int rotation = corridorGhost.rotation;
                     Vector3 position = corridorGhost.GetComponentInParent<ConstructableBase>().transform.position;
                     bool hasTargetBase = corridorGhost.targetBase != null;
                     Int3 targetCell = hasTargetBase ? corridorGhost.targetBase.WorldToGrid(position): default;
-                    builderMetadata = new CorridorBuilderMetadata(position.ToDto(), rotation, hasTargetBase, targetCell.ToDto());
+                    builderMetadata = new CorridorBuilderMetadata(position.ToDto(), Builder.lastRotation, hasTargetBase, targetCell.ToDto());
                     break;
                 }
                 case BaseAddMapRoomGhost mapRoomGhost:
                 {
-                    Base.CellType cellType = mapRoomGhost.cellType;
-                    int connectionMask = mapRoomGhost.connectionMask;
-                    builderMetadata = new MapRoomBuilderMetadata((byte)cellType, connectionMask);
+                    Base.CellType cellType = mapRoomGhost.GetCellType();
+                    builderMetadata = new MapRoomBuilderMetadata((byte)cellType, Builder.lastRotation);
                     break;
                 }
                 case BaseAddModuleGhost module:
@@ -42,7 +38,7 @@ namespace NitroxModel_Subnautica.DataStructures.GameLogic.Buildings.Rotation
                 case BaseAddFaceGhost faceGhost:
                 {
                     Base.Face anchoredFace = faceGhost.anchoredFace!.Value;
-                    builderMetadata = new AnchoredFaceBuilderMetadata(anchoredFace.cell.ToDto(), (int)anchoredFace.direction, (int)faceGhost.faceType);
+                    builderMetadata = new AnchoredFaceBuilderMetadata(anchoredFace.cell.ToDto(), (int)anchoredFace.direction, (int)faceGhost.faceType, faceGhost.targetBase.GetAnchor().ToDto());
                     break;
                 }
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using BinaryPack.Attributes;
 using ProtoBufNet;
 
 namespace NitroxModel.DataStructures.GameLogic
@@ -24,6 +25,7 @@ namespace NitroxModel.DataStructures.GameLogic
         [ProtoMember(6)]
         public float InfectionAmount { get; }
 
+        [IgnoreConstructor]
         protected PlayerStatsData()
         {
             // Constructor for serialization. Has to be "protected" for json serialization.
@@ -41,7 +43,7 @@ namespace NitroxModel.DataStructures.GameLogic
 
         public override string ToString()
         {
-            return "[Oxygen: " + Oxygen + " MaxOxygen: " + MaxOxygen + " Health: " + Health + " Food: " + Food + " Water: " + Water + " InfectionAmount: " + InfectionAmount + " ]";
+            return $"[Oxygen: {Oxygen} MaxOxygen: {MaxOxygen} Health: {Health} Food: {Food} Water: {Water} InfectionAmount: {InfectionAmount} ]";
         }
     }
 }

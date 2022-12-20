@@ -59,23 +59,75 @@ namespace NitroxServer
             StringBuilder builder = new("\n");
             if (viewerPerms is Perms.CONSOLE)
             {
-                builder.AppendLine($" - Save location: {Path.GetFullPath(serverConfig.SaveName)}");
+                builder.AppendLine($" - Save location: {Path.Combine(WorldManager.SavesFolderDir, serverConfig.SaveName)}");
             }
-            builder.AppendLine($" - Aurora's state: {world.EventTriggerer.GetAuroraStateSummary()}");
-            builder.AppendLine($" - Current time: day {world.EventTriggerer.Day} ({Math.Floor(world.EventTriggerer.ElapsedSeconds)}s)");
-            builder.AppendLine($" - Scheduled goals stored: {world.GameData.StoryGoals.ScheduledGoals.Count}");
-            builder.AppendLine($" - Story goals completed: {world.GameData.StoryGoals.CompletedGoals.Count}");
-            builder.AppendLine($" - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}");
-            builder.AppendLine($" - World gamemode: {serverConfig.GameMode}");
-            builder.AppendLine($" - Story goals unlocked: {world.GameData.StoryGoals.GoalUnlocks.Count}");
-            builder.AppendLine($" - Encyclopedia entries: {world.GameData.PDAState.EncyclopediaEntries.Count}");
-            builder.AppendLine($" - Storage slot items: {world.InventoryManager.GetAllStorageSlotItems().Count}");
-            builder.AppendLine($" - Inventory items: {world.InventoryManager.GetAllInventoryItems().Count}");
-            builder.AppendLine($" - Progress tech: {world.GameData.PDAState.CachedProgress.Count}");
-            builder.AppendLine($" - Known tech: {world.GameData.PDAState.KnownTechTypes.Count}");
-            builder.AppendLine($" - Vehicles: {world.VehicleManager.GetVehicles().Count()}");
+            builder.AppendLine($"""
+             - Aurora's state: {world.EventTriggerer.GetAuroraStateSummary()}
+             - Current time: day {world.EventTriggerer.Day} ({Math.Floor(world.EventTriggerer.ElapsedSeconds)}s)
+             - Scheduled goals stored: {world.GameData.StoryGoals.ScheduledGoals.Count}
+             - Story goals completed: {world.GameData.StoryGoals.CompletedGoals.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - Radio messages stored: {world.GameData.StoryGoals.RadioQueue.Count}
+             - World gamemode: {serverConfig.GameMode}
+             - Story goals unlocked: {world.GameData.StoryGoals.GoalUnlocks.Count}
+             - Encyclopedia entries: {world.GameData.PDAState.EncyclopediaEntries.Count}
+             - Storage slot items: {world.InventoryManager.GetAllStorageSlotItems().Count}
+             - Inventory items: {world.InventoryManager.GetAllInventoryItems().Count}
+             - Progress tech: {world.GameData.PDAState.CachedProgress.Count}
+             - Known tech: {world.GameData.PDAState.KnownTechTypes.Count}
+             - Vehicles: {world.VehicleManager.GetVehicles().Count()}
+            """);
                 
             return builder.ToString();
+        }
+
+        public static ServerConfig ServerStartHandler()
+        {
+            string saveDir = null;
+            foreach (string arg in Environment.GetCommandLineArgs())
+            {
+                if (arg.StartsWith(WorldManager.SavesFolderDir, StringComparison.OrdinalIgnoreCase) && Directory.Exists(arg))
+                {
+                    saveDir = arg;
+                    break;
+                }
+            }
+            if (saveDir == null)
+            {
+                // Check if there are any save files
+                WorldManager.Listing[] worldList = WorldManager.GetSaves().ToArray();
+                if (worldList.Any())
+                {
+                    // Get last save file used
+                    string lastSaveAccessed = worldList[0].WorldSaveDir;
+                    if (worldList.Length > 1)
+                    {
+                        for (int i = 1; i < worldList.Length; i++)
+                        {
+                            if (File.GetLastWriteTime(Path.Combine(worldList[i].WorldSaveDir, "WorldData.json")) > File.GetLastWriteTime(lastSaveAccessed))
+                            {
+                                lastSaveAccessed = worldList[i].WorldSaveDir;
+                            }
+                        }
+                    }
+                    saveDir = lastSaveAccessed;
+                }
+                else
+                {
+                    // Create new save file
+                    saveDir = Path.Combine(WorldManager.SavesFolderDir, "My World");
+                    Directory.CreateDirectory(saveDir);
+                    ServerConfig serverConfig = ServerConfig.Load(saveDir);
+                    Log.Debug($"No save file was found, creating a new one...");
+                }
+
+            }
+
+            return ServerConfig.Load(saveDir);
         }
 
         public void Save()
@@ -87,7 +139,7 @@ namespace NitroxServer
 
             IsSaving = true;
 
-            bool savedSuccessfully = worldPersistence.Save(world, serverConfig.SaveName);
+            bool savedSuccessfully = worldPersistence.Save(world, Path.Combine(WorldManager.SavesFolderDir, serverConfig.SaveName));
             if (savedSuccessfully && !string.IsNullOrWhiteSpace(serverConfig.PostSaveCommandPath))
             {
                 try

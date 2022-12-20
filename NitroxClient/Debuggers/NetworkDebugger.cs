@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -16,7 +16,7 @@ namespace NitroxClient.Debuggers
 
         private readonly List<string> filter = new()
         {
-            nameof(Movement), nameof(EntityTransformUpdates), nameof(PlayerStats), nameof(CellEntities), nameof(VehicleMovement), nameof(PlayerCinematicControllerCall),
+            nameof(PlayerMovement), nameof(EntityTransformUpdates), nameof(PlayerStats), nameof(CellEntities), nameof(VehicleMovement), nameof(PlayerCinematicControllerCall),
             nameof(PlayFMODAsset), nameof(PlayFMODCustomEmitter), nameof(PlayFMODStudioEmitter),  nameof(PlayFMODCustomLoopingEmitter)
         };
         private readonly List<PacketDebugWrapper> packets = new List<PacketDebugWrapper>(PACKET_STORED_COUNT);
@@ -27,7 +27,7 @@ namespace NitroxClient.Debuggers
         private Vector2 scrollPosition;
         private int sentCount;
 
-        public NetworkDebugger() : base(600, null, KeyCode.N, true, false, false, GUISkinCreationOptions.DERIVEDCOPY)
+        public NetworkDebugger() : base(600, null, KeyCode.N, true, false, false, GUISkinCreationOptions.DERIVEDCOPY, 330)
         {
             ActiveTab = AddTab("All", RenderTabPackets);
             AddTab("Sent", RenderTabSentPackets);

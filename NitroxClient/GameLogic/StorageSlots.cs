@@ -28,7 +28,7 @@ namespace NitroxClient.GameLogic
             NitroxId itemId = NitroxEntity.GetId(item.item.gameObject);
             byte[] bytes = SerializationHelper.GetBytesWithoutParent(item.item.gameObject);
 
-            ItemData itemData = new(id, itemId, bytes);
+            BasicItemData itemData = new(id, itemId, bytes);
             StorageSlotItemAdd add = new(itemData);
             packetSender.Send(add);
         }
@@ -47,7 +47,7 @@ namespace NitroxClient.GameLogic
 
             if (!owner.HasValue)
             {
-                Log.Error("Could not place " + item.name + " in storageSlot container with id " + containerId);
+                Log.Error($"Could not place {item.name} in storageSlot container with id {containerId}");
                 return;
             }
 
@@ -108,7 +108,7 @@ namespace NitroxClient.GameLogic
             }
             else
             {
-                Log.Error("Removing storage slot item: Could not find storage slot field on object " + owner.name);
+                Log.Error($"Removing storage slot item: Could not find storage slot field on object {owner.name}");
             }
         }
 

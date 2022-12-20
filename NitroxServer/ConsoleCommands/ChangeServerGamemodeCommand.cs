@@ -1,10 +1,12 @@
-﻿using NitroxModel.DataStructures.GameLogic;
+﻿using System.IO;
+using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
 using NitroxModel.Server;
 using NitroxServer.ConsoleCommands.Abstract;
 using NitroxServer.ConsoleCommands.Abstract.Type;
 using NitroxServer.GameLogic;
 using NitroxServer.Serialization;
+using NitroxServer.Serialization.World;
 
 namespace NitroxServer.ConsoleCommands
 {
@@ -25,11 +27,11 @@ namespace NitroxServer.ConsoleCommands
         {
             ServerGameMode sgm = args.Get<ServerGameMode>(0);
 
-            serverConfig.Update(c =>
+            using (serverConfig.Update(Path.Combine(WorldManager.SavesFolderDir, serverConfig.SaveName)))
             {
-                if (c.GameMode != sgm)
+                if (serverConfig.GameMode != sgm)
                 {
-                    c.GameMode = sgm;
+                    serverConfig.GameMode = sgm;
 
                     playerManager.SendPacketToAllPlayers(new GameModeChanged(sgm));
                     SendMessageToAllPlayers($"Server gamemode changed to \"{sgm}\" by {args.SenderName}");
@@ -38,7 +40,7 @@ namespace NitroxServer.ConsoleCommands
                 {
                     SendMessage(args.Sender, "Server is already using this gamemode");
                 }
-            });
+            }
         }
     }
 }

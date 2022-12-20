@@ -1,7 +1,10 @@
-﻿using NitroxModel.DataStructures.GameLogic;
+﻿using System;
+using System.IO;
+using NitroxModel.DataStructures.GameLogic;
 using NitroxServer.ConsoleCommands.Abstract;
 using NitroxServer.ConsoleCommands.Abstract.Type;
 using NitroxServer.Serialization;
+using NitroxServer.Serialization.World;
 
 namespace NitroxServer.ConsoleCommands
 {
@@ -20,21 +23,21 @@ namespace NitroxServer.ConsoleCommands
         {
             bool toggle = args.Get<bool>(0);
 
-            serverConfig.Update(c =>
+            using (serverConfig.Update(Path.Combine(WorldManager.SavesFolderDir, serverConfig.SaveName)))
             {
                 if (toggle)
                 {
-                    c.DisableAutoSave = false;
+                    serverConfig.DisableAutoSave = false;
                     Server.Instance.EnablePeriodicSaving();
                     SendMessage(args.Sender, "Enabled periodical saving");
                 }
                 else
                 {
-                    c.DisableAutoSave = true;
+                    serverConfig.DisableAutoSave = true;
                     Server.Instance.DisablePeriodicSaving();
                     SendMessage(args.Sender, "Disabled periodical saving");
                 }
-            });
+            }
         }
     }
 }

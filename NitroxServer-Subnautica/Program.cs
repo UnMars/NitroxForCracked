@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using NitroxModel.Core;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.DataStructures.Util;
-using NitroxModel.Discovery;
 using NitroxModel.Helper;
 using NitroxModel.Platforms.OS.Shared;
 using NitroxModel_Subnautica.DataStructures.GameLogic;
@@ -76,7 +75,7 @@ public class Program
             {
                 gameInstallDir = new Lazy<string>(() =>
                 {
-                    string gameDir = NitroxUser.SubnauticaPath;
+                    string gameDir = NitroxUser.GamePath;
                     Log.Info($"Using game files from: {gameDir}");
                     return gameDir;
                 });
@@ -298,7 +297,7 @@ public class Program
     private static void OnCtrlCPressed(object sender, ConsoleCancelEventArgs e)
     {
         e.Cancel = true; // Prevents process from terminating
-        Console.Write("\r" + new string(' ', Console.WindowWidth - 1) + "\r"); // Clears current line
+        Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r"); // Clears current line
     }
 
     private static void StopServer()

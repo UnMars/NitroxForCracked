@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NitroxClient.GameLogic.InitialSync.Base;
 using NitroxClient.MonoBehaviours;
+using NitroxModel.Core;
 using NitroxModel.DataStructures;
 using NitroxModel.DataStructures.GameLogic;
 using NitroxModel.Packets;
@@ -21,25 +22,34 @@ namespace NitroxClient.GameLogic.InitialSync
 
         public override IEnumerator Process(InitialPlayerSync packet, WaitScreen.ManualWaitItem waitScreenItem)
         {
-            SetPlayerGameObjectId(packet.PlayerGameObjectId);
-            waitScreenItem.SetProgress(0.2f);
+            SetPlayerPermissions(packet.Permissions);
+            waitScreenItem.SetProgress(0.17f);
             yield return null;
 
-            AddStartingItemsToPlayer(packet.FirstTimeConnecting);
-            waitScreenItem.SetProgress(0.4f);
+            SetPlayerGameObjectId(packet.PlayerGameObjectId);
+            waitScreenItem.SetProgress(0.33f);
+            yield return null;
+
+            yield return AddStartingItemsToPlayer(packet.FirstTimeConnecting);
+            waitScreenItem.SetProgress(0.5f);
             yield return null;
 
             SetPlayerStats(packet.PlayerStatsData);
-            waitScreenItem.SetProgress(0.6f);
+            waitScreenItem.SetProgress(0.66f);
             yield return null;
 
             SetPlayerGameMode(packet.GameMode);
-            waitScreenItem.SetProgress(0.8f);
+            waitScreenItem.SetProgress(0.83f);
             yield return null;
 
             SetPlayerCompletedGoals(packet.CompletedGoals);
             waitScreenItem.SetProgress(1f);
             yield return null;
+        }
+
+        private void SetPlayerPermissions(Perms permissions)
+        {
+            NitroxServiceLocator.LocateService<LocalPlayer>().Permissions = permissions;
         }
 
         private void SetPlayerGameObjectId(NitroxId id)
@@ -48,15 +58,17 @@ namespace NitroxClient.GameLogic.InitialSync
             Log.Info($"Received initial sync player GameObject Id: {id}");
         }
 
-        private void AddStartingItemsToPlayer(bool firstTimeConnecting)
+        private IEnumerator AddStartingItemsToPlayer(bool firstTimeConnecting)
         {
             if (firstTimeConnecting)
             {
                 foreach (TechType techType in LootSpawner.main.GetEscapePodStorageTechTypes())
                 {
-                    GameObject gameObject = CraftData.InstantiateFromPrefab(techType, false);
+                    TaskResult<GameObject> result = new TaskResult<GameObject>();
+                    yield return CraftData.InstantiateFromPrefabAsync(techType, result, false);
+                    GameObject gameObject = result.Get();
                     Pickupable pickupable = gameObject.GetComponent<Pickupable>();
-                    pickupable = pickupable.Initialize();
+                    pickupable.Initialize();
                     itemContainers.AddItem(pickupable.gameObject, NitroxEntity.GetId(Player.main.gameObject));
                     itemContainers.BroadcastItemAdd(pickupable, Inventory.main.container.tr);
                 }
@@ -79,7 +91,14 @@ namespace NitroxClient.GameLogic.InitialSync
                 {
                     Player.main.infectionRevealed = true;
                 }
+
+                // We need to make the player invincible before he finishes loading because in some cases he will eventually die before loading
+                Player.main.liveMixin.invincible = true;
+                Player.main.FreezeStats();
             }
+            // We need to start it at least once for everything that's in the PDA to load
+            Player.main.GetPDA().Open(PDATab.Inventory);
+            Player.main.GetPDA().Close();
         }
 
         private void SetPlayerGameMode(ServerGameMode gameMode)
@@ -88,7 +107,7 @@ namespace NitroxClient.GameLogic.InitialSync
             GameModeUtils.SetGameMode((GameModeOption)(int)gameMode, GameModeOption.None);
         }
 
-        private void SetPlayerCompletedGoals(ISet<string> completedGoals)
+        private void SetPlayerCompletedGoals(IEnumerable<string> completedGoals)
         {
             GoalManager.main.completedGoalNames.AddRange(completedGoals);
             PlayerWorldArrows.main.completedCustomGoals.AddRange(completedGoals);
