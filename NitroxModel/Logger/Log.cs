@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using LiteNetLib;
 using NitroxModel.Helper;
 using Serilog;
 using Serilog.Context;
@@ -33,10 +34,12 @@ namespace NitroxModel.Logger
         {
             if (isSetup)
             {
-                throw new Exception($"{nameof(Log)} setup should only be executed once.");
+                Log.Warn($"{nameof(Log)} setup should only be executed once.");
+                return;
             }
             isSetup = true;
-            
+            NetDebug.Logger = new LiteNetLibLogger();
+
             PlayerName = "";
             logger = new LoggerConfiguration()
                      .MinimumLevel.Debug()

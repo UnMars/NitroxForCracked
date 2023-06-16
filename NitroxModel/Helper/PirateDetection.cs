@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using NitroxModel.Platforms.OS.Shared;
 
 namespace NitroxModel.Helper
 {
@@ -17,7 +18,7 @@ namespace NitroxModel.Helper
             {
                 pirateDetected += value;
 
-                // Invoke new subscriber immediately if pirate has already been detected. 
+                // Invoke new subscriber immediately if pirate has already been detected.
                 if (HasTriggered)
                 {
                     value?.Invoke(null, EventArgs.Empty);
@@ -32,7 +33,7 @@ namespace NitroxModel.Helper
             {
                 return false;
             }
-            
+
             OnPirateDetected();
             return true;
         }

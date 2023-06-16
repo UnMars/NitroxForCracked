@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -17,11 +16,11 @@ namespace NitroxModel.Helper
     {
         private static readonly string[] privateNetworks =
             {
-                "10.0.0.0/8", 
-                "127.0.0.0/8", 
-                "172.16.0.0/12", 
-                "192.0.0.0/24 ", 
-                "192.168.0.0/16", 
+                "10.0.0.0/8",
+                "127.0.0.0/8",
+                "172.16.0.0/12",
+                "192.0.0.0/24 ",
+                "192.168.0.0/16",
                 "198.18.0.0/15",
             };
 
@@ -83,7 +82,7 @@ namespace NitroxModel.Helper
 #if RELEASE
             if (ip == null || ip.IsPrivate())
             {
-                Regex regex = new(@"(?:[0-2]??[0-9]{1,2}\.){3}[0-2]??[0-9]+", RegexOptions.Compiled);
+                Regex regex = new(@"(?:[0-2]??[0-9]{1,2}\.){3}[0-2]??[0-9]+");
                 string[] sites =
                 {
                     "https://ipv4.icanhazip.com/",
