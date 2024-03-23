@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using NitroxModel.Discovery;
+using NitroxModel.Discovery.Models;
 using NitroxModel.Helper;
 using NitroxModel.Platforms.OS.Shared;
 using NitroxModel.Platforms.Store.Interfaces;
@@ -20,7 +20,7 @@ namespace NitroxModel.Platforms.Store {
         public bool OwnsGame(string gameDirectory)
         {
             string steamDll = Path.Combine(gameDirectory, "steam_api64.dll");
-            return File.Exists(steamDll) && new FileInfo(steamDll).Length > 209000;
+            return File.Exists(steamDll) && new FileInfo(steamDll).Length >= 209000;
         }
 
         public async Task<ProcessEx> StartPlatformAsync()
