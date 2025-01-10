@@ -19,9 +19,11 @@ public class NitroxCyclops : MonoBehaviour
     private WorldForces worldForces;
     private Stabilizer stabilizer;
     private CharacterController controller;
-    private int ballasts;
+    private CyclopsNoiseManager cyclopsNoiseManager;
 
     public readonly Dictionary<INitroxPlayer, CyclopsPawn> Pawns = [];
+
+    public static readonly Dictionary<NitroxCyclops, float> ScaledNoiseByCyclops = [];
 
     public void Start()
     {
@@ -32,18 +34,26 @@ public class NitroxCyclops : MonoBehaviour
         worldForces = GetComponent<WorldForces>();
         stabilizer = GetComponent<Stabilizer>();
         controller = cyclopsMotor.controller;
-        ballasts = GetComponentsInChildren<BallastWeight>(true).Length;
+        cyclopsNoiseManager = GetComponent<CyclopsNoiseManager>();
 
         UWE.Utils.SetIsKinematicAndUpdateInterpolation(rigidbody, false, true);
 
-        GetComponent<SubFire>().enabled = false;
-
         WorkaroundColliders();
+
+        ScaledNoiseByCyclops.Add(this, 0f);
     }
 
     public void Update()
     {
         MaintainPawns();
+
+        // Calculation from AttackCyclops.UpdateAggression
+        ScaledNoiseByCyclops[this] = Mathf.Lerp(0f, 150f, cyclopsNoiseManager.GetNoisePercent());
+    }
+
+    public void OnDestroy()
+    {
+        ScaledNoiseByCyclops.Remove(this);
     }
 
     /// <summary>
@@ -142,7 +152,6 @@ public class NitroxCyclops : MonoBehaviour
         Pawns.Remove(player);
     }
 
-    // TODO: Use SetBroadcasting and SetReceiving when we finally have a cyclops movements rework
     public void SetBroadcasting()
     {
         worldForces.enabled = true;

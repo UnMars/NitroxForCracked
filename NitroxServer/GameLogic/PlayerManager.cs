@@ -20,6 +20,7 @@ namespace NitroxServer.GameLogic
     public class PlayerManager
     {
         private readonly ThreadSafeDictionary<string, Player> allPlayersByName;
+        private readonly ThreadSafeDictionary<ushort, Player> connectedPlayersById = [];
         private readonly ThreadSafeDictionary<INitroxConnection, ConnectionAssets> assetsByConnection = new();
         private readonly ThreadSafeDictionary<string, PlayerContext> reservations = new();
         private readonly ThreadSafeSet<string> reservedPlayerNames = new("Player"); // "Player" is often used to identify the local player and should not be used by any user
@@ -122,9 +123,10 @@ namespace NitroxServer.GameLogic
             ushort playerId = hasSeenPlayerBefore ? player.Id : ++currentPlayerId;
             NitroxId playerNitroxId = hasSeenPlayerBefore ? player.GameObjectId : new NitroxId();
             NitroxGameMode gameMode = hasSeenPlayerBefore ? player.GameMode : serverConfig.GameMode;
+            IntroCinematicMode introCinematicMode = hasSeenPlayerBefore ? IntroCinematicMode.COMPLETED : IntroCinematicMode.LOADING;
 
             // TODO: At some point, store the muted state of a player
-            PlayerContext playerContext = new(playerName, playerId, playerNitroxId, !hasSeenPlayerBefore, playerSettings, false, gameMode);
+            PlayerContext playerContext = new(playerName, playerId, playerNitroxId, !hasSeenPlayerBefore, playerSettings, false, gameMode, null, introCinematicMode);
             string reservationKey = Guid.NewGuid().ToString();
 
             reservations.Add(reservationKey, playerContext);
@@ -206,14 +208,15 @@ namespace NitroxServer.GameLogic
                     serverConfig.GameMode,
                     new List<NitroxTechType>(),
                     Array.Empty<Optional<NitroxId>>(),
-                    new List<EquippedItemData>(),
-                    new List<EquippedItemData>(),
+                    new Dictionary<string, NitroxId>(),
                     new Dictionary<string, float>(),
                     new Dictionary<string, PingInstancePreference>(),
                     new List<int>()
                 );
                 allPlayersByName[playerContext.PlayerName] = player;
             }
+
+            connectedPlayersById.Add(playerContext.PlayerId, player);
 
             // TODO: make a ConnectedPlayer wrapper so this is not stateful
             player.PlayerContext = playerContext;
@@ -248,6 +251,7 @@ namespace NitroxServer.GameLogic
             {
                 Player player = assetPackage.Player;
                 reservedPlayerNames.Remove(player.Name);
+                connectedPlayersById.Remove(player.Id);
             }
 
             assetsByConnection.Remove(connection);
@@ -301,6 +305,11 @@ namespace NitroxServer.GameLogic
             return false;
         }
 
+        public bool TryGetPlayerById(ushort playerId, out Player player)
+        {
+            return connectedPlayersById.TryGetValue(playerId, out player);
+        }
+
         public Player GetPlayer(INitroxConnection connection)
         {
             if (!assetsByConnection.TryGetValue(connection, out ConnectionAssets assetPackage))
@@ -335,13 +344,13 @@ namespace NitroxServer.GameLogic
             }
         }
 
-        private IEnumerable<Player> ConnectedPlayers()
+        public IEnumerable<Player> ConnectedPlayers()
         {
             return assetsByConnection.Values
                 .Where(assetPackage => assetPackage.Player != null)
                 .Select(assetPackage => assetPackage.Player);
         }
-        
+
         public void BroadcastPlayerJoined(Player player)
         {
             PlayerJoinedMultiplayerSession playerJoinedPacket = new(player.PlayerContext, player.SubRootId, player.Entity);

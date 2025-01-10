@@ -12,6 +12,7 @@ using NitroxServer.Communication.Packets.Processors.Abstract;
 using NitroxServer.GameLogic;
 using NitroxServer.GameLogic.Bases;
 using NitroxServer.GameLogic.Entities;
+using NitroxServer.Serialization;
 using NitroxServer.Serialization.World;
 
 namespace NitroxServer.Communication.Packets.Processors
@@ -24,8 +25,9 @@ namespace NitroxServer.Communication.Packets.Processors
         private readonly World world;
         private readonly EntityRegistry entityRegistry;
         private readonly BuildingManager buildingManager;
+        private readonly ServerConfig serverConfig;
 
-        public PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleKeeper, StoryManager storyManager, PlayerManager playerManager, World world, EntityRegistry entityRegistry, BuildingManager buildingManager)
+        public PlayerJoiningMultiplayerSessionProcessor(ScheduleKeeper scheduleKeeper, StoryManager storyManager, PlayerManager playerManager, World world, EntityRegistry entityRegistry, BuildingManager buildingManager, ServerConfig serverConfig)
         {
             this.scheduleKeeper = scheduleKeeper;
             this.storyManager = storyManager;
@@ -33,6 +35,7 @@ namespace NitroxServer.Communication.Packets.Processors
             this.world = world;
             this.entityRegistry = entityRegistry;
             this.buildingManager = buildingManager;
+            this.serverConfig = serverConfig;
         }
 
         public override void Process(PlayerJoiningMultiplayerSession packet, INitroxConnection connection)
@@ -45,8 +48,6 @@ namespace NitroxServer.Communication.Packets.Processors
                 SpawnEntities spawnNewEscapePod = new(newlyCreatedEscapePod.Value);
                 playerManager.SendPacketToOtherPlayers(spawnNewEscapePod, player);
             }
-
-            List<EquippedItemData> equippedItems = player.GetEquipment();
 
             // Make players on localhost admin by default.
             if (connection.Endpoint.Address.IsLocalhost())
@@ -65,7 +66,7 @@ namespace NitroxServer.Communication.Packets.Processors
             InitialPlayerSync initialPlayerSync = new(player.GameObjectId,
                 wasBrandNewPlayer,
                 assignedEscapePodId,
-                equippedItems,
+                player.EquippedItems,
                 player.UsedItems,
                 player.QuickSlotsBindingIds,
                 world.GameData.PDAState.GetInitialPDAData(),
@@ -79,10 +80,12 @@ namespace NitroxServer.Communication.Packets.Processors
                 simulations,
                 player.GameMode,
                 player.Permissions,
+                wasBrandNewPlayer ? IntroCinematicMode.LOADING : IntroCinematicMode.COMPLETED,
                 new(new(player.PingInstancePreferences), player.PinnedRecipePreferences.ToList()),
                 storyManager.GetTimeData(),
                 isFirstPlayer,
-                BuildingManager.GetEntitiesOperations(globalRootEntities)
+                BuildingManager.GetEntitiesOperations(globalRootEntities),
+                serverConfig.KeepInventoryOnDeath
             );
 
             player.SendPacket(initialPlayerSync);
